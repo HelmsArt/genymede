@@ -1,0 +1,20 @@
+{
+  "name": "uzay-macerasi-mobil",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Uzay Macerası — Android/iOS kabuğu (Capacitor)",
+  "scripts": {
+    "esitle": "sh esitle.sh",
+    "android": ". ./ortam.sh && sh esitle.sh && npx cap sync android && cd android && ./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk ../UzayMacerasi-debug.apk",
+    "yukle": ". ./ortam.sh && adb install -r UzayMacerasi-debug.apk",
+    "oykunucu": ". ./ortam.sh && emulator -avd UzayTablet -gpu host"
+  },
+  "dependencies": {
+    "@capacitor-community/text-to-speech": "^8.0.2",
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2"
+  }
+}

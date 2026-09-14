@@ -1,0 +1,12 @@
+{
+  "appId": "tr.uzaymacerasi.app",
+  "appName": "Uzay Macerası",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#070620"
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

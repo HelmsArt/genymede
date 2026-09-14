@@ -1,0 +1,17 @@
+# Sistem
+.DS_Store
+
+# Mobil kabuk — üretilen ve makineye özel
+mobil/node_modules/
+mobil/www/
+mobil/*.apk
+mobil/android/app/build/
+mobil/android/build/
+mobil/android/.gradle/
+mobil/android/local.properties
+mobil/android/app/src/main/assets/public/
+mobil/android/app/src/main/assets/capacitor.config.json
+mobil/android/app/src/main/assets/capacitor.plugins.json
+mobil/android/capacitor-cordova-android-plugins/
+mobil/android/.idea/
+mobil/android/*.iml
