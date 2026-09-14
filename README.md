@@ -7,7 +7,7 @@ colourful 2D cartoon mode for younger children. It also builds as an Android app
 The app's user interface is in Turkish, and so are the identifiers and comments in the source code — that is a
 deliberate choice for a Turkish children's project. This documentation is in English.
 
-![Solar System](gorseller/gunes-sistemi.png)
+![Solar System](screenshots/gunes-sistemi.png)
 
 ## Try it
 
@@ -39,9 +39,9 @@ fall back to procedurally generated textures and the app still works.
 - **For kids:** 3D ↔ 2D toggle, spoken narration (for children who cannot read yet), a "Find it!" game,
   "Make Your Own Planet", confetti and sound effects.
 
-![Black hole](gorseller/kara-delik.png)
+![Black hole](screenshots/kara-delik.png)
 
-![Info card](gorseller/bilgi-karti.png)
+![Info card](screenshots/bilgi-karti.png)
 
 ## Privacy and safety
 
@@ -69,7 +69,7 @@ uzay-macerasi.html   the whole application
 dokular/             surface and sky maps (sources and licences: dokular/SOURCES.md)
 araclar/             Python scripts that derive the size/distance scale and check the data against reality
 mobil/               Android (and later iOS) shell
-gorseller/           screenshots
+screenshots/           screenshots
 ```
 
 ## Done so far
