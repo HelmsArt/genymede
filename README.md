@@ -74,6 +74,8 @@ screenshots/           screenshots
 
 ## Done so far
 
+- **16 Sep 2026** — Phone-friendly layout: a scrollable strip of body pictures at the bottom, scene picker and tools in
+  bottom sheets, a compact info card. Menus show pictures of the planets, moons and stars instead of small emoji.
 - **15 Sep 2026** — Android app: Capacitor shell, landscape full screen, vector icon, native narrator, touch
   refinements (two-finger pan, larger touch targets), touch shortcut for the diagnostics overlay. Tested on a phone.
   Zero-permission manifest.
