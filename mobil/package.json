@@ -2,7 +2,7 @@
   "name": "uzay-macerasi-mobil",
   "version": "1.1.0",
   "private": true,
-  "description": "Uzay Macerası — Android/iOS shell (Capacitor)",
+  "description": "Genymede — Android/iOS shell (Capacitor)",
   "scripts": {
     "esitle": "sh esitle.sh",
     "android": ". ./ortam.sh && sh esitle.sh && npx cap sync android && cd android && ./gradlew assembleDebug && cp app/build/outputs/apk/debug/app-debug.apk ../UzayMacerasi-debug.apk",

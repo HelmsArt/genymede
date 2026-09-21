@@ -1,4 +1,4 @@
-# Uzay Macerası — Android / iOS shell
+# Genymede — Android / iOS shell
 
 > Packaging and build notes. Open work is on the repository's Issues page.
 

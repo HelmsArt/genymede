@@ -39,3 +39,15 @@ cd araclar && python3 denetle.py
 
 Expected output: only the `EKSEN eris` warning. Eris's pole orientation has genuinely never been measured — that
 warning is left on purpose; do not silence it with an invented number.
+
+## `ikon.svg` and `ikon-png.sh`
+
+`ikon.svg` is the launcher icon: Ganymede, the moon the app is named after, in front of Jupiter. It is the single
+source for the artwork. The Android adaptive icon
+(`mobil/android/app/src/main/res/drawable/ic_launcher_foreground.xml`) carries the same path data by hand — change
+one and you must change the other.
+
+`sh araclar/ikon-png.sh` regenerates the legacy PNG launcher icons (Android 7.x only; 8.0 and later use the
+adaptive icon). It crops the central 72 of the 108 canvas, scales it to fill, lays it over the background colour
+and masks it — a rounded square for `ic_launcher.png`, a circle for `ic_launcher_round.png` — at all five
+densities. It needs nothing but Chrome, which is already required to test the app.

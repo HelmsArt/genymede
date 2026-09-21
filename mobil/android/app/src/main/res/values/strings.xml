@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Uzay Macerası</string>
-    <string name="title_activity_main">Uzay Macerası</string>
+    <string name="app_name">Genymede</string>
+    <string name="title_activity_main">Genymede</string>
     <string name="package_name">tr.uzaymacerasi.app</string>
     <string name="custom_url_scheme">tr.uzaymacerasi.app</string>
 </resources>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Genymede launcher icon, adaptive-icon foreground layer.
+     108x108 canvas; the central 66 units are the guaranteed-safe zone, the mask
+     is 72. Ganymede sits inside the safe zone, Jupiter is deliberately cropped.
+     This file is the single source: araclar/ikon-png.sh renders the legacy PNGs
+     from it, and the Android VectorDrawable in
+     mobil/android/app/src/main/res/drawable/ic_launcher_foreground.xml carries
+     the same path data. Change one, change the other. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="108" height="108" viewBox="0 0 108 108">
+  <defs>
+    <radialGradient id="jup" cx="0.28" cy="0.24" r="0.85">
+      <stop offset="0.30" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#2A1206" stop-opacity="0.55"/>
+    </radialGradient>
+    <radialGradient id="gan" cx="0.30" cy="0.26" r="0.88">
+      <stop offset="0.28" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0B0718" stop-opacity="0.62"/>
+    </radialGradient>
+    <clipPath id="jupClip"><circle cx="90" cy="20" r="36"/></clipPath>
+    <clipPath id="ganClip"><circle cx="48" cy="60" r="22"/></clipPath>
+  </defs>
+
+  <!-- yıldızlar -->
+  <path fill="#FFFFFF" fill-opacity="0.92" d="M24,30 l1.1,2.7 2.7,1.1 -2.7,1.1 -1.1,2.7 -1.1,-2.7 -2.7,-1.1 2.7,-1.1z"/>
+  <path fill="#35E6D8" fill-opacity="0.9"  d="M86,84 l0.85,2.1 2.1,0.85 -2.1,0.85 -0.85,2.1 -0.85,-2.1 -2.1,-0.85 2.1,-0.85z"/>
+  <path fill="#FF4FA3" fill-opacity="0.85" d="M27,79 l0.7,1.7 1.7,0.7 -1.7,0.7 -0.7,1.7 -0.7,-1.7 -1.7,-0.7 1.7,-0.7z"/>
+
+  <!-- Jüpiter: bilerek kadrajdan taşar -->
+  <g clip-path="url(#jupClip)">
+    <circle cx="90" cy="20" r="36" fill="#E9B97C"/>
+    <rect x="54" y="-16" width="72" height="8"  fill="#C9894F" fill-opacity="0.85"/>
+    <rect x="54" y="-2"  width="72" height="6"  fill="#C9894F" fill-opacity="0.65"/>
+    <rect x="54" y="10"  width="72" height="9"  fill="#BE7C44" fill-opacity="0.85"/>
+    <rect x="54" y="25"  width="72" height="11" fill="#C9894F" fill-opacity="0.9"/>
+    <rect x="54" y="42"  width="72" height="7"  fill="#BE7C44" fill-opacity="0.7"/>
+    <ellipse cx="74" cy="30" rx="7.5" ry="4.6" fill="#D2543A" fill-opacity="0.95"/>
+    <circle cx="90" cy="20" r="36" fill="url(#jup)"/>
+  </g>
+
+  <!-- Ganymede: adın kaynağı, güvenli bölgenin içinde -->
+  <g clip-path="url(#ganClip)">
+    <circle cx="48" cy="60" r="22" fill="#D5CCBD"/>
+    <path fill="#7B7162" fill-opacity="0.9" d="M28,52 C33,43 47,40 56,46 C61,49 59,57 50,59 C40,61 27,60 28,52z"/>
+    <path fill="#7B7162" fill-opacity="0.55" d="M28,70 C32,65 39,67 41,73 C43,79 37,83 32,79 C27,76 26,73 28,70z"/>
+    <path fill="#7B7162" fill-opacity="0.45" d="M55,70 C58,67 63,68 64,72 C65,77 60,79 57,76 C54,74 53,72 55,70z"/>
+    <circle cx="57" cy="52" r="2.6" fill="#F1E8D7" fill-opacity="0.85"/>
+    <circle cx="40" cy="72" r="1.8" fill="#F1E8D7" fill-opacity="0.6"/>
+    <circle cx="48" cy="60" r="22" fill="url(#gan)"/>
+  </g>
+</svg>

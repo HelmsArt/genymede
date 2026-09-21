@@ -1,4 +1,4 @@
-# Genymede — Uzay Macerası
+# Genymede
 
 An interactive space simulation for children aged 4–10, in Turkish. **A single HTML file** with no dependencies:
 no libraries, no CDN, no internet connection needed. A hand-written 3D perspective engine on Canvas 2D, plus a
@@ -84,7 +84,9 @@ screenshots/           screenshots
   afterwards. Returning from the background no longer jumps time, keeps the narrator talking or silences the
   sound effects. All seven scene tabs fit on a 1280 px screen, and on a 360 px phone the scene name is no longer
   truncated. On Android the hardware back key now closes one layer at a time instead of quitting the app. Fixed a
-  crash that could blank the screen if the animation clock stepped backwards.
+  crash that could blank the screen if the animation clock stepped backwards. Renamed to **Genymede**, with a new
+  icon — Ganymede in front of Jupiter. The custom icon had never actually been shown: a leftover default drawable
+  was overriding it on every device.
 - **16 Sep 2026** — Phone-friendly layout: a scrollable strip of body pictures at the bottom, scene picker and tools in
   bottom sheets, a compact info card. Menus show pictures of the planets, moons and stars instead of small emoji.
 - **15 Sep 2026** — Android app: Capacitor shell, landscape full screen, vector icon, native narrator, touch
