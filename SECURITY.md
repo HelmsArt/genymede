@@ -8,7 +8,9 @@ anything.**
 - **No network access.** The HTML contains no `fetch`, `XMLHttpRequest`, `WebSocket`, beacon or external URL.
   The Android manifest declares **no permissions**, so the operating system would block network access even if code
   tried to use it.
-- **No storage of personal data.** No accounts, cookies, analytics, advertising or tracking SDKs.
+- **No storage of personal data.** No accounts, cookies, analytics, advertising or tracking SDKs. The single
+  exception is local storage on the device, used only to keep the planets a child makes in the planet maker
+  (name, colour, size, distance). It never leaves the device and clearing the app's data removes it.
 - **No third-party runtime code.** No external scripts; the Android shell contains only Capacitor and a plugin that
   calls the device's built-in text-to-speech engine.
 - **No dangerous APIs.** No `eval`, no dynamic code loading, no clipboard, camera, microphone or location access.

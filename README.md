@@ -51,6 +51,9 @@ The app is designed to be safe to hand to a child:
 - **No permissions.** The Android app requests **no Android system permissions** — not even `INTERNET`. Backups and cleartext
   traffic are disabled in the manifest.
 - **No data collection.** No accounts, no analytics, no ads, no tracking, no storage of personal data.
+- **What is saved, and where.** The only thing the app saves is the planets a child makes in the planet maker —
+  their name, colour, size and distance — kept in the browser's local storage on that device. It is never sent
+  anywhere, it is not readable by any other site or app, and clearing the app's data removes it.
 - **No third-party code at runtime.** The HTML loads no external scripts. The Android shell uses only Capacitor and one
   plugin that calls the phone's own text-to-speech engine.
 - **Official builds** will only ever be distributed through this repository's Releases. Any APK obtained elsewhere
@@ -74,6 +77,10 @@ screenshots/           screenshots
 
 ## Done so far
 
+- **21 Sep 2026** — Labels no longer pile up: they are now placed by collision rather than by angle, so the ISS,
+  Hubble and James Webb keep separate lines. Planets made in the planet maker survive a reload (stored on the
+  device only). Coming back from the background no longer jumps time or keeps the narrator talking. All seven
+  scene tabs fit on a 1280 px screen, and on a 360 px phone the scene name is no longer truncated.
 - **16 Sep 2026** — Phone-friendly layout: a scrollable strip of body pictures at the bottom, scene picker and tools in
   bottom sheets, a compact info card. Menus show pictures of the planets, moons and stars instead of small emoji.
 - **15 Sep 2026** — Android app: Capacitor shell, landscape full screen, vector icon, native narrator, touch

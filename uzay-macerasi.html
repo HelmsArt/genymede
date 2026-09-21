@@ -279,6 +279,36 @@
   #dugSahne, #dugMenu, #perde, .sayfa, #serit, .sayfa-bas, .kat-bas .kapat{display:none}
   #araclarIzgara{display:contents}
 
+  /* ---------- SEKME ŞERİDİ DAR MASAÜSTÜNDE ----------
+     1280 px genişlikte yedi sekme üst çubuğa sığmıyordu: "Einstein Lab"
+     şeridin dışında kalıyor, kaydırma çubuğu da gizlendiği için kesildiği
+     anlaşılmıyordu. İki önlem birden:
+     1) 1460 px altında marka yazısı gizlenir, sekmeler ve simgeleri daralır —
+        kazanılan ~210 px yedi sekmeyi 1280'e sığdırmaya yetiyor. Eşik ölçülerek
+        seçildi: tam boy sekmeler ancak 1440 px'ten sonra sığıyor, eşik 1400'de
+        bırakılınca 1410 px'te 13 piksellik bir açık kalıyordu;
+     2) şeridin sağ ucu her koşulda yumuşak sönümlenir. İçerik kenara
+        dayanmadıkça sönümlenen bölge boştur, yani görünmez; dayandığında
+        "devamı var, kaydır" der. */
+  #sahneler{
+    -webkit-mask-image:linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+    mask-image:linear-gradient(90deg, #000 calc(100% - 24px), transparent);
+  }
+  @media (max-width: 1460px){
+    .marka span.yazi{display:none}
+    #sahneler{gap:4px}
+    .sekme{font-size:13px; padding:7px 10px 7px 4px; gap:5px}
+    .sekme canvas.resim{width:20px !important; height:20px !important}
+  }
+  /* İkinci kademe: 1024 px'lik dizüstü ekranlar. Buradan sonra kısılacak yer
+     kalmıyor — daha darda şerit kaydırılır, sağ uçtaki sönümleme bunu söyler. */
+  @media (max-width: 1200px){
+    #ust{gap:6px; padding-left:calc(10px + env(safe-area-inset-left)); padding-right:calc(10px + env(safe-area-inset-right))}
+    .arac{padding:7px 9px}
+    .sekme{font-size:12.5px; padding:7px 8px 7px 4px}
+    .sekme canvas.resim{width:18px !important; height:18px !important}
+  }
+
   /* ---------- TELEFON YERLEŞİMİ (body.mobil, JS'teki MOBIL_SORGU) ----------
      Üstte: roket · sahne düğmesi · oyun · ses · araçlar. Altta: resimli cisim
      şeridi. Kart, katalog, araçlar ve sahne seçimi alttan açılan sayfalar. */
@@ -298,7 +328,19 @@
   body.mobil #dugSahne canvas{border-radius:50%}
   body.mobil #dugSahne .yazi{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
   body.mobil #dugSahne::after{content:'▾'; margin-left:auto; padding-left:4px; color:var(--metin-3); font-size:14px}
-  @media (max-width: 420px){ body.mobil #dugOyun .yazi{display:none} }
+  /* 360 px'te "Güneş Sistemi" ve "Kara Delikler" üç nokta ile kesiliyordu.
+     Roket küçülür ama kalır — tanı penceresinin dokunmatik kısayolu (5 dokunuş)
+     ona bağlı. Simgeler, boşluklar ve ok daralır; dokunma hedefleri 44 px'in
+     altına inmez. Kazanılan ~40 px adı tam yazdırmaya yetiyor. */
+  @media (max-width: 420px){
+    body.mobil #dugOyun .yazi{display:none}
+    body.mobil #ust{gap:6px}
+    body.mobil .marka .rozet{width:34px; height:34px; font-size:17px}
+    body.mobil #ust .arac{min-width:44px; padding:4px 7px}
+    body.mobil #dugSahne{padding:4px 8px 4px 5px; gap:5px; font-size:14.5px}
+    body.mobil #dugSahne canvas{width:26px !important; height:26px !important}
+    body.mobil #dugSahne::after{font-size:12px; padding-left:2px}
+  }
 
   /* resimli cisim şeridi */
   body.mobil #serit{
@@ -1218,14 +1260,45 @@ function hale(sx, sy, r, renkHex, guc){
   ctx.fillStyle = g; ctx.fill();
 }
 
+/* ---------- Etiket yerleşimi ----------
+   Her etiketin yeri cismin kendi geometrisinden gelir: gezegenin altı, uydunun
+   ana gezegenden dışa bakan yönü. İSS, Hubble ve James Webb neredeyse aynı
+   yarıçapta ve aynı açıda dolandığı için üç ad tek bir okunmaz yığına biniyordu;
+   aynısı kalabalık uydu sistemlerinde de oluyor. Açıyı değiştirmek çözmez —
+   çakışmanın kendisine bakmak gerekir.
+   Bu yüzden her etiket, o karede daha önce yazılmış etiketlerin dikdörtgenleriyle
+   sınanır ve boş bir yer bulunana dek bir satır aşağı, bir satır yukarı, iki
+   satır aşağı… diye kaydırılır. Yalnız dikeyde kaydırılır: yatayda kaydırmak
+   etiketi ait olduğu cisimden koparıyor. Cisimler uzaktan yakına çizildiği için
+   yerini koruyan arkadaki olur; bu kasıtlı bir tercih değil, çizim sırasının
+   sonucudur ve çakışan cisimler zaten hemen hemen aynı uzaklıkta.
+   Liste her karede `dongu` içinde sıfırlanır. Resim üretilirken `durum.etiket`
+   kapalı olduğundan buraya hiç girilmez, yani liste kirlenmez. */
+var etiketKutu = [];
+var ETIKET_DENEME = 8;          /* en çok ±4 satır kaydırma */
+
+function etiketDolu(sx, sy, g, y){
+  for(var i=0;i<etiketKutu.length;i++){
+    var k = etiketKutu[i];
+    if(sx - g/2 < k.x2 && sx + g/2 > k.x1 && sy - y/2 < k.y2 && sy + y/2 > k.y1) return true;
+  }
+  return false;
+}
+
 function etiketYaz(sx, sy, metin, renkHex, buyuk){
   if(!durum.etiket) return;
   ctx.font = (buyuk?'700 14px ':'600 12px ') + 'ui-rounded, "SF Pro Rounded", "Chalkboard SE", system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  var g = ctx.measureText(metin).width + 6, y = buyuk ? 17 : 15;
+  var yer = sy;
+  for(var i=1; i<=ETIKET_DENEME && etiketDolu(sx, yer, g, y); i++){
+    yer = sy + Math.ceil(i/2) * y * (i % 2 ? 1 : -1);
+  }
+  etiketKutu.push({x1:sx-g/2, x2:sx+g/2, y1:yer-y/2, y2:yer+y/2});
   ctx.lineWidth = 3.5; ctx.strokeStyle = 'rgba(5,4,22,.86)';
-  ctx.strokeText(metin, sx, sy);
+  ctx.strokeText(metin, sx, yer);
   ctx.fillStyle = renkHex || '#F2EFFF';
-  ctx.fillText(metin, sx, sy);
+  ctx.fillText(metin, sx, yer);
 }
 
 /* Uydu etiketini ana gezegenden dışa doğru itip kalabalıkta okunur tutar */
@@ -4972,6 +5045,9 @@ function taniCiz(){
 }
 
 function dongu(zaman){
+  /* Kare arka planda sürüyorsa çizme: bazı WebView'lar uygulama duraklatıldıktan
+     sonra birkaç kare daha rAF çalıştırır, kara delik haritası boşuna hesaplanır. */
+  if(document.hidden){ sonKare = 0; requestAnimationFrame(dongu); return; }
   var dt = sonKare ? Math.min(0.05, (zaman - sonKare)/1000) : 0.016;
   sonKare = zaman;
   durum.t += dt * durum.hiz;
@@ -4984,6 +5060,7 @@ function dongu(zaman){
   kamera.bakis.z += (kamera.hedefBakis.z - kamera.bakis.z) * k;
 
   hedefler.length = 0;
+  etiketKutu.length = 0;
   arkaPlan();
   gunesPerdeKur(durum.t);
 
@@ -5144,6 +5221,21 @@ function sesiKes(){
   if('speechSynthesis' in window){ try{ window.speechSynthesis.cancel(); }catch(e){} }
 }
 
+/* ---------- Arka plan / ön plan ----------
+   Uygulama (ya da sekme) arka plana atılınca requestAnimationFrame durur, ama
+   `sonKare` o anki zaman damgasını tutmaya devam eder. Geri dönüldüğünde ilk
+   kare dt tavanı kadar, yani tam 50 ms'lik bir adım atar: büyük `durum.hiz`
+   değerlerinde gezegenler gözle görülür biçimde sıçrar. Saati unutmak yeter —
+   dönüşteki ilk kare 16 ms sayılır, sonra normal akış sürer.
+   Sesli anlatım da arka planda tek başına konuşmaya devam etmesin: kesilir.
+   (Android WebView uygulama duraklatılınca visibilitychange gönderir; ayrı bir
+   eklentiye gerek yok.) */
+function gorunurlukDegisti(){
+  sonKare = 0;
+  if(document.hidden) sesiKes();
+}
+document.addEventListener('visibilitychange', gorunurlukDegisti);
+
 /* ---------- Cisim resimleri ----------
    Menülerde küçük emoji yerine cismin kendi resmi görünür: 4-10 yaş 🪐 ile
    🌕'u ayırt edemiyor ama halkalı Satürn'ü tanıyor. Resim ayrı bir çizimle
@@ -5197,10 +5289,18 @@ function resimCiz(c, S){
     return;
   }
   if(c.tip === 'lab'){
-    yuvarlakDik(S*0.03, S*0.1, S*0.94, S*0.8, S*0.1);
-    ctx.fillStyle = 'rgba(16,10,44,.9)'; ctx.fill();
+    /* Resim her yerde daireye kırpılıyor (şerit, sekme, katalog satırı). Eski
+       dikdörtgen pano hem köşelerinden kesiliyor hem de tuvalin ancak yarısını
+       kullanıyordu; şeritte deneyin ne olduğu seçilmiyordu. Şimdi zemin
+       dairenin kendisi, deney de dairenin içine sığacak en büyük boyda.
+       Ölçek deneyerek seçildi: her deneyin daire dışında kalan mürekkebi
+       ölçüldü. S/236 (eski) zaten "Zamanın Yavaşlaması"nın %3'ünü kesiyordu;
+       S/185'te kayıp 0/0/%6/%2/%1, görünen çizim ise 1,2–1,6 kat büyüyor.
+       Daha ileri gitmek (S/152) E = mc²'nin %11'ini kesiyor — orada durduk. */
+    ctx.beginPath(); ctx.arc(S/2, S/2, S*0.5, 0, 6.2832);
+    ctx.fillStyle = 'rgba(16,10,44,.92)'; ctx.fill();
     ctx.save(); ctx.clip();
-    var sl = S/236, W = 115*sl, H = 82*sl;
+    var sl = S/185, W = 115*sl, H = 82*sl;
     var q = {x:S/2, y:S/2, s:sl, gorunur:true};
     ctx.translate(0, -H*0.12);
     if(c.laptip === 'kumas')       kumasCiz(c, 0.8, q, W, H*0.78);
@@ -5980,25 +6080,73 @@ el('dugYapimci').addEventListener('click', function(){ sayfaKapat(); elYapimci.c
 el('ypIptal').addEventListener('click', function(){ elYapimci.classList.remove('acik'); });
 elYapimci.addEventListener('click', function(e){ if(e.target === elYapimci) elYapimci.classList.remove('acik'); });
 
-el('ypYap').addEventListener('click', function(){
-  var ad = (el('ypAd').value || 'Yıldızcan').trim().slice(0, 14) || 'Yıldızcan';
-  var boy = 2 + (+el('ypBoy').value)/100 * 13;
-  var uzak = 70 + (+el('ypUzak').value)/100 * 400;
+/* Gezegeni nesne olarak kur. Hem "Ekle" düğmesi hem de açılışta geri yükleme
+   buradan geçer — iki ayrı kurulum olursa er geç ayrışırlar. Gelen değerler
+   kaydedilmiş dosyadan da gelebileceği için burada sınırlanır. */
+function gezegenKur(k){
+  var ad = ((k.ad == null ? '' : '' + k.ad).trim() || 'Yıldızcan').slice(0, 14);
+  var boy = kis(+k.boy || 2, 2, 15);
+  var uzak = kis(+k.uzak || 70, 70, 470);
+  var renk = /^#[0-9A-Fa-f]{6}$/.test(k.renk) ? k.renk : YP_RENKLER[0];
   ypSayac++;
   var id = 'benim' + ypSayac;
   var yeni = {
     id:id, sahne:'gunes', grup:'Senin Gezegenlerin', ad:ad, ikon:'🌟', tip:'gezegen',
-    a:uzak, e:0.02, egim:0.05, yil:Math.pow(uzak/114, 1.5), r:boy, renk:ypRenk, acik:true,
-    faz:Math.random()*Math.PI*2, benim:true,
+    a:uzak, e:0.02, egim:0.05, yil:Math.pow(uzak/114, 1.5), r:boy, renk:renk, acik:true,
+    faz:(typeof k.faz === 'number' && isFinite(k.faz)) ? k.faz : Math.random()*Math.PI*2, benim:true,
     bilgi:ad + ', senin keşfettiğin gezegen! Güneş’in etrafında kendi yörüngesinde dönüyor. Ona istediğin ismi verebilir, istediğin rengi seçebilirsin.',
     ilginc:'Gerçek gökbilimciler de yeni gezegenler buluyor. Şimdiye kadar başka yıldızların etrafında 5.000’den fazla gezegen keşfedildi!',
     veri:[['Kâşifi','Sen 🎉'],['Güneş’ten','' + Math.round(uzak/114*150) + ' milyon km'],['Bir yılı', (Math.pow(uzak/114,1.5)).toFixed(1).replace('.', ',') + ' yıl'],['Boyu', boy > 9 ? 'Dev' : (boy > 5 ? 'Orta' : 'Küçük')]]
   };
+  return yeni;
+}
+
+/* ---------- Yapımcı gezegenlerinin kalıcılığı ----------
+   Çocuğun yaptığı gezegen sayfa kapanınca kaybolmasın. Saklanan tek şey onun
+   dört seçimi (ad, renk, boy, uzaklık) ve yörüngedeki yeri; geri kalan bütün
+   alanlar `gezegenKur` içinde bunlardan türer, yani kayıt biçimi çizimden
+   bağımsız kalır. Kayıt cihazdan çıkmaz: hesap, sunucu, analitik yok
+   (KURALLAR §5b — localStorage yalnız oyun içi tercih için).
+   Her erişim try/catch içinde: gizli sekmede, depolama kapalıyken ve kota
+   dolduğunda localStorage hata fırlatır; oyun bundan hiç etkilenmemeli. */
+var YP_ANAHTAR = 'uzayMacerasi.gezegenler';
+var YP_EN_COK = 40;
+
+function gezegenleriKaydet(){
+  try{
+    var liste = [];
+    for(var i=0;i<CISIMLER.length;i++){
+      var c = CISIMLER[i];
+      if(c.benim) liste.push({ad:c.ad, renk:c.renk, boy:c.r, uzak:c.a, faz:c.faz});
+    }
+    if(liste.length > YP_EN_COK) liste = liste.slice(liste.length - YP_EN_COK);
+    localStorage.setItem(YP_ANAHTAR, JSON.stringify(liste));
+  }catch(e){}
+}
+
+function gezegenleriYukle(){
+  var liste = null;
+  try{ liste = JSON.parse(localStorage.getItem(YP_ANAHTAR) || '[]'); }catch(e){ return; }
+  if(!liste || typeof liste.length !== 'number') return;
+  var n = Math.min(liste.length, YP_EN_COK);
+  for(var i=0;i<n;i++){
+    if(liste[i] && typeof liste[i] === 'object') CISIMLER.push(gezegenKur(liste[i]));
+  }
+}
+
+el('ypYap').addEventListener('click', function(){
+  var yeni = gezegenKur({
+    ad:   el('ypAd').value,
+    renk: ypRenk,
+    boy:  2 + (+el('ypBoy').value)/100 * 13,
+    uzak: 70 + (+el('ypUzak').value)/100 * 400
+  });
   CISIMLER.push(yeni);
+  gezegenleriKaydet();
   elYapimci.classList.remove('acik');
   if(durum.sahne !== 'gunes') sahneSec('gunes');
   else listeKur();
-  sec(id, true);
+  sec(yeni.id, true);
   patlamaEkle(GA/2, YU/2);
   efekt('odul');
 });
@@ -6028,6 +6176,7 @@ window.addEventListener('keydown', function(e){
 /* ============================================================
    BAŞLAT
    ============================================================ */
+gezegenleriYukle();     /* kayıtlı yapımcı gezegenleri katalog listelenmeden önce eklenir */
 boyutla();
 yerlesimUygula();
 sekmeleriKur();
