@@ -53,6 +53,11 @@ The debug APK is signed with a debug key and is for your own testing only; it is
 - **Narration:** Android's WebView has **no** `speechSynthesis`. The `@capacitor-community/text-to-speech` plugin is
   installed; the HTML's `konus()` / `sesiKes()` first look for `Capacitor.Plugins.TextToSpeech` (`yerelOkuyucu()`) and
   fall back to the browser API otherwise. Verified with the `tr-TR` voice.
+- **Back button:** the `@capacitor/app` plugin is installed so the hardware back key closes one layer at a time —
+  planet maker, then any open sheet, then the info card, then the game — and only leaves the app once nothing is
+  open. The HTML registers the listener in `geriTusuKur()` and shares the ordering with the Escape key through
+  `geriGit()`. Registering a `backButton` listener makes the page responsible for quitting, hence the `exitApp()`
+  call at the end of the chain. The plugin declares no Android permissions and has no dependencies of its own.
 - `capacitor.config.json`: `androidScheme: https` (the WebView serves from `https://localhost`, giving a secure
   context for workers).
 

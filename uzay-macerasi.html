@@ -6362,13 +6362,41 @@ window.addEventListener('keydown', function(e){
     return;
   }
   if(e.shiftKey && e.code === 'KeyG' && !yaziAlani){ kdGLDegistir(); return; }
-  if(e.key === 'Escape'){
-    if(elYapimci.classList.contains('acik')) elYapimci.classList.remove('acik');
-    else if(el('perde').classList.contains('acik')) sayfaKapat();
-    else if(durum.oyunAcik) oyunBitir();
-    else { durum.secili = null; kartGizle(); listeYenile(); }
-  }
+  if(e.key === 'Escape') geriGit();
 });
+
+/* ---------- Geri ----------
+   Android'in geri tuşu ile Escape aynı sırayı izler: en üstteki katmandan
+   başlayıp aşağı iner, kapatacak bir şey bulursa orada durur ve true döner.
+   false dönmesi "kapatılacak bir şey kalmadı" demektir; telefonda uygulama o
+   zaman kapanır, tarayıcıda hiçbir şey olmaz.
+   Sıra kapanma sırasının tersi: en son açılan en önce kapanır. Kart oyundan
+   önce gelir çünkü oyun oynanırken cisme dokununca kart açılıyor — geri tuşu
+   oyunu değil kartı kapatmalı. */
+function geriGit(){
+  if(elYapimci.classList.contains('acik')){ elYapimci.classList.remove('acik'); return true; }
+  if(el('perde').classList.contains('acik')){ sayfaKapat(); return true; }
+  if(elKart.classList.contains('gorunur')){ durum.secili = null; kartGizle(); listeYenile(); return true; }
+  if(durum.oyunAcik){ oyunBitir(); return true; }
+  return false;
+}
+
+/* Android geri tuşu. Eklenti yoksa (tarayıcı) bu blok hiç çalışmaz ve tuş
+   tarayıcının kendi geri hareketi olarak kalır — HTML tek dosya olduğu için
+   orada zaten yapacak bir şey yok. Dinleyici bağlandığı andan itibaren
+   kapanma sorumluluğu bizde: `exitApp` çağrılmazsa uygulama kapanmaz. */
+function geriTusuKur(){
+  var C = window.Capacitor;
+  var App = C && C.Plugins && C.Plugins.App;
+  if(!App || !App.addListener) return false;
+  try{
+    App.addListener('backButton', function(){
+      if(geriGit()) efekt('tik');
+      else { try{ App.exitApp(); }catch(e){} }
+    });
+  }catch(e){ return false; }
+  return true;
+}
 
 /* ============================================================
    BAŞLAT
@@ -6383,6 +6411,7 @@ el('dugEtiket').classList.add('acik');
 el('dugYorunge').classList.add('acik');
 kamera.hedefBakis = {x:kamera.bakis.x, y:kamera.bakis.y, z:kamera.bakis.z};
 hizYenile();
+geriTusuKur();          /* telefonda geri tuşu; tarayıcıda sessizce hiçbir şey yapmaz */
 requestAnimationFrame(dongu);
 
 </script>
