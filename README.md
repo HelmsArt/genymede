@@ -77,10 +77,13 @@ screenshots/           screenshots
 
 ## Done so far
 
-- **21 Sep 2026** — Labels no longer pile up: they are now placed by collision rather than by angle, so the ISS,
-  Hubble and James Webb keep separate lines. Planets made in the planet maker survive a reload (stored on the
-  device only). Coming back from the background no longer jumps time or keeps the narrator talking. All seven
-  scene tabs fit on a 1280 px screen, and on a 360 px phone the scene name is no longer truncated.
+- **21 Sep 2026** — Labels no longer pile up: they are placed by collision rather than by angle, so the ISS,
+  Hubble and James Webb keep separate lines. Saturn and Uranus cast their ring shadow onto the planet itself.
+  Planets made in the planet maker survive a reload (stored on the device only). Startup no longer stalls: the
+  surface maps used to be requested all at once before the first frame, and are now fetched one at a time
+  afterwards. Returning from the background no longer jumps time, keeps the narrator talking or silences the
+  sound effects. All seven scene tabs fit on a 1280 px screen, and on a 360 px phone the scene name is no longer
+  truncated. Fixed a crash that could blank the screen if the animation clock stepped backwards.
 - **16 Sep 2026** — Phone-friendly layout: a scrollable strip of body pictures at the bottom, scene picker and tools in
   bottom sheets, a compact info card. Menus show pictures of the planets, moons and stars instead of small emoji.
 - **15 Sep 2026** — Android app: Capacitor shell, landscape full screen, vector icon, native narrator, touch

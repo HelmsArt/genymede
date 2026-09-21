@@ -1558,10 +1558,50 @@ var GERCEK_DOKU = {
 };
 var GORSELLER = {};
 
+/* ---------- Dosya yüklemesi ilk kareden sonra ----------
+   Ölçüm: açılışta 21 JPEG (~11,5 MB) aynı anda isteniyordu. Sebep ince:
+   sahne çizimi dokuyu tembel ister (yalnız yarıçap ≥ 15 piksel olunca), ama
+   menü resimleri 160² tuvalde cismi ~37 piksel yarıçapla çizdiği için o eşiği
+   HER ZAMAN aşıyor — yani katalog ve şerit resimleri üretilirken bütün dokular
+   birden isteniyordu. İlk kare daha çizilmeden. Zayıf telefondaki gecikmenin
+   kaynağı bu.
+   Çözüm dosyaları iptal etmek değil, sıraya koymak: ilk kare çizilene kadar
+   hiçbir dosya istenmez (prosedürel doku zaten var ve o sırada zaten o
+   kullanılıyordu), sonra tek tek, biri bitmeden öbürü başlamadan yüklenir.
+   Gelen doku menü resmini `resimYenile` ile, gökyüzünü `gokPerde`nin önbellek
+   anahtarı ile kendiliğinden tazeler — yani ekleme bir şey bozmaz, yalnız
+   sırayı değiştirir. Dosyası olmayan dokular (Enceladus, Triton, Charon,
+   Miranda — `dokular/SOURCES.md`'de bilerek yok) da bu sıraya girer, onların
+   404'ü de ilk kareden çıkmış olur. */
+var dokuErtele = true;
+var dokuSira = null;
+
+function dokuKuyruguBaslat(){
+  if(!dokuErtele) return;
+  dokuErtele = false;
+  dokuSira = ['samanyolu'];                 /* en iri dosya (2,05 MB) ve en görünür olan, başa */
+  for(var id in GERCEK_DOKU) if(id !== 'samanyolu') dokuSira.push(id);
+  dokuSiradaki();
+}
+function dokuSiradaki(){
+  while(dokuSira && dokuSira.length){
+    var id = dokuSira.shift();
+    if(GORSELLER[id] !== undefined) continue;      /* ekranda büyüdüğü için zaten istenmiş */
+    var im = gercekDoku(id);
+    if(!im || im.complete) continue;               /* tabloda yok ya da önbellekten anında geldi */
+    im.addEventListener('load', dokuSiradaki);     /* gercekDoku'nun kendi onload'unu ezme */
+    im.addEventListener('error', dokuSiradaki);
+    return;
+  }
+}
+
 function gercekDoku(id){
   if(GORSELLER[id] !== undefined) return GORSELLER[id];
   var ad = GERCEK_DOKU[id];
   if(!ad){ GORSELLER[id] = null; return null; }
+  /* İlk kare çizilmeden dosya istenmez. Not edilmez de: `GORSELLER[id]`
+     boş bırakılır ki sıra gelince yeniden sorulabilsin. */
+  if(dokuErtele) return null;
   var im = new Image();
   GORSELLER[id] = im;
   im.onerror = function(){ GORSELLER[id] = null; };   /* dosya yoksa sessizce prosedürele dön */
@@ -2073,6 +2113,116 @@ function halkaGolgesi(c, poz, on, qm){
   yayDoldur(dis, ic, uygun, n, 'rgba(7,5,24,.66)');
 }
 
+/* Halkanın GEZEGEN üzerine düşen gölgesi — yukarıdakinin tersi yön.
+   Şaşırtıcı biçimde aynı denklem. Halka düzleminde θ açısındaki birim yön için
+   ışığın düzlemdeki bileşeni k = L·R·cosθ + L·S·sinθ olsun. ρ yarıçapındaki
+   halka noktasından ışığa ters yönde inen ışın küreye ancak ρ ≤ 1/√(1-k²) ise
+   değer — `halkaGolgesi`deki `enUzak` ifadesinin ta kendisi, yalnız orada
+   gezegen yarıçapı birimiyle yazılmış. Tek fark işaret: gezegenin gölgesi
+   ışıktan UZAĞA (k<0) düşer, halkanınki ışığa DÖNÜK (k>0) tarafa.
+   Değme noktası P = Q - sL, s = Q·L - √((Q·L)² - ρ² + 1); kökün eksi işareti
+   küreye ışığın ilk vurduğu, yani aydınlık yüzdeki noktayı seçer (öbür kök
+   kürenin arka yüzünü verir, orası zaten karanlık).
+   Hesap kamera uzayında ve gezegen yarıçapı birim; ekrana (sx + x·r, sy + y·r)
+   ile düşüyoruz — küre ekranda daire çizildiği için bu birebir doğru, `gunGece`
+   ve `kenarIsigi` de aynı varsayımla çalışır.
+   Tek pürüzsüz çokgen olarak çiziliyor. Bant bant (Cassini boşluğu gölgede de
+   görünsün diye) çizmek gerçekçi olurdu ama `halkaGolgesi`de denenip
+   basamaklandığı için bilerek yapılmadı. */
+var GOLGE_RENK = 'rgba(6,4,20,.5)';
+function gezegendeHalkaGolgesi(c, sx, sy, r, L){
+  var h = c.halka;
+  var tb = eksenTabani(c);                       /* N kutup, R/S ekvator düzlemi — kamera uzayı */
+  var R = tb.R, S = tb.S;
+  var lr = R.x*L.x + R.y*L.y + R.z*L.z;
+  var ls = S.x*L.x + S.y*L.y + S.z*L.z;
+  /* Örnek sayısı gezegenin ekrandaki boyuna göre: uzaktayken 60 yeter, ekranı
+     kaplarken 180 gerekiyor. Sabit 180'de Satürm ekranı kaplarken kare başına
+     0,46 ms yiyordu; bu haliyle tipik uzaklıkta payı ölçülemeyecek kadar küçük. */
+  var n = kis(Math.round(r*1.6), 60, 180), dis = [], ic = [], uygun = [], i;
+
+  for(i=0;i<n;i++){
+    var th = i/n*Math.PI*2, ca = Math.cos(th), sa = Math.sin(th);
+    var k = lr*ca + ls*sa;
+    var wx = R.x*ca + S.x*sa, wy = R.y*ca + S.y*sa, wz = R.z*ca + S.z*sa;
+    var ok = false, roD = h.ic;
+    if(k > 0){
+      var enUzak = 1/Math.sqrt(Math.max(1e-4, 1 - k*k));
+      if(enUzak > h.ic){ ok = true; roD = Math.min(h.dis, enUzak); }
+    }
+    /* Görünür ρ aralığını iki uçtan da kırp. ρ büyüdükçe gölge noktası aydınlık
+       yüzden gece sınırına doğru kayar ve bir yerde kürenin arkasına geçer;
+       o eşik ρ_kenar. Hangi ucun kırpılacağı uçların görünürlüğünden belli. */
+    var roI = h.ic;
+    var pI = golgeNoktasi(roI, k, wx, wy, wz, L);
+    var pD = golgeNoktasi(roD, k, wx, wy, wz, L);
+    if(ok && (pI.z <= 0 || pD.z <= 0)){
+      var roK = kenarYaricapi(k, wz, L.z);
+      if(roK > roI && roK < roD){
+        if(pD.z <= 0 && pI.z > 0){ roD = roK; pD = golgeNoktasi(roD, k, wx, wy, wz, L); }
+        else if(pI.z <= 0 && pD.z > 0){ roI = roK; pI = golgeNoktasi(roI, k, wx, wy, wz, L); }
+        else ok = false;                        /* iki uç da arkada */
+      } else if(pI.z <= 0 && pD.z <= 0) ok = false;
+    }
+    dis.push(golgeEkran(pD, sx, sy, r));
+    ic.push( golgeEkran(pI, sx, sy, r));
+    uygun.push(ok);
+  }
+  /* Görünür açı aralığı ikiye bölünebiliyor: gölgenin bir ucu gezegenin
+     arkasından geçip öbür taraftan çıkınca. `yayDoldur` tek kesintisiz yay
+     doldurduğu için öbekleri tek tek veriyoruz — yoksa ikinci öbek hiç
+     çizilmiyor. Ölçümde bir durumda 243 piksellik gölgenin 222'si böyle
+     kayboluyordu. */
+  var basVar = false;
+  for(i=0;i<n;i++) if(uygun[i] && !uygun[(i - 1 + n) % n]){ basVar = true; break; }
+  if(!basVar){ if(uygun[0]) yayDoldur(dis, ic, uygun, n, GOLGE_RENK); return; }
+  var mask = [], i2, j;
+  for(i=0;i<n;i++){
+    if(!uygun[i] || uygun[(i - 1 + n) % n]) continue;      /* öbek başı değilse geç */
+    for(i2=0;i2<n;i2++) mask[i2] = false;
+    for(i2=0;i2<n;i2++){ j = (i + i2) % n; if(!uygun[j]) break; mask[j] = true; }
+    yayDoldur(dis, ic, mask, n, GOLGE_RENK);
+  }
+}
+
+/* Gölge noktasının tam kürenin kenarına (P.z = 0) düştüğü halka yarıçapı.
+   P = ρw - sL, s = ρk - √(1-ρ²(1-k²)) idi. P.z = 0 yazıp ρ'yu çekersek:
+     a = w.z - k·L.z,  b = L.z  →  ρ = |b| / √(a² + b²(1-k²))
+   Kök alınırken işaret kayboluyor, bu yüzden a ile b'nin ters işaretli olması
+   koşulu ayrıca sınanır; sağlanmazsa bu açıda kenarı kesen bir ρ yoktur.
+   Bu kapalı çözüm, noktayı ekran yarıçapı boyunca kenara itmekten çok daha
+   doğru: itme yöntemi denendi, gölgenin bazı açılarda gezegenin yanlış yerine
+   1331 piksellik bir leke bıraktığı ölçüldü (kaba kuvvet referansıyla). */
+function kenarYaricapi(k, wz, Lz){
+  var a = wz - k*Lz, b = Lz;
+  if(a === 0 || b === 0 || (a > 0) === (b > 0)) return -1;
+  return Math.abs(b) / Math.sqrt(a*a + b*b*(1 - k*k));
+}
+
+/* Yine de arkaya düşen nokta kalırsa kenar çemberine taşınır. `kureDoku` ağ köşeleri
+   için aynısını yapıyor ve sebebi aynı: taşımak yerine noktayı atarsak çokgen
+   iki ucu düz bir kirişle kapatıyor ve gölgenin gezegen kenarına dayanması
+   gereken yerde köşeli bir kama beliriyor. (Denendi: 120 örneğin 26'sı gölge
+   açısında, 11'i arkada kalıyordu — kama tam olarak o 11 örnekti.)
+   Çizim zaten gezegen dairesine kırpılı, dolayısıyla kenardan taşmaz. */
+function golgeEkran(P, sx, sy, r){
+  var x = P.x, y = P.y;
+  if(P.z <= 0){
+    var d = Math.sqrt(x*x + y*y) || 1e-6;
+    x /= d; y /= d;
+  }
+  return {x: sx + x*r, y: sy + y*r, gorunur: true};
+}
+
+/* ρ yarıçaplı halka noktasından ışığa ters yönde inen ışının küreye değdiği yer
+   (birim küre, kamera uzayı). Kök altı eksiyse ışın küreyi ıskalar; 0'a kırpınca
+   teğet noktayı döndürür, o da kürenin kenarıdır. */
+function golgeNoktasi(ro, k, wx, wy, wz, L){
+  var QL = ro*k;
+  var s = QL - Math.sqrt(Math.max(0, QL*QL - ro*ro + 1));
+  return {x: ro*wx - s*L.x, y: ro*wy - s*L.y, z: ro*wz - s*L.z};
+}
+
 function halkaCiz(c, poz, olcek, on){
   var h = c.halka; if(!h) return;
   var qm = izdusum(poz); if(!qm.gorunur) return;
@@ -2127,6 +2277,16 @@ function gezegenCiz(c, t){
       if(c.evimiz) kutupCiz(q.x, q.y, r, .5);
       else if(c.id === 'mars') kutupCiz(q.x, q.y, r, .38);
     }
+  }
+
+  /* Halkanın gezegene düşürdüğü gölge: yüzey bitti, ışıklandırma henüz gelmedi.
+     Bu sıra bilinçli — gece gradyanı gölgenin üstüne binince gölge gece
+     tarafında kendiliğinden kayboluyor, ayrıca sınırı yumuşuyor. */
+  if(uc && c.halka && r > 5){
+    ctx.save();
+    ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, 6.2832); ctx.clip();
+    gezegendeHalkaGolgesi(c, q.x, q.y, r, L);
+    ctx.restore();
   }
 
   if(uc && r > 2){
@@ -4998,6 +5158,9 @@ function taniCiz(){
   var h = kdHavuz;
   if(kdGL === false) sat.push('worker: ' + (h === null ? 'henüz kurulmadı' : (h === false ? 'YOK — ana iş parçacığı yolu' : h.isciler.length + ' adet')));
   sat.push('çekirdek: ' + (navigator.hardwareConcurrency || '?'));
+  sat.push('ses: anlatım ' + (durum.ses ? 'açık' : 'KAPALI') +
+           ' · okuyucu ' + (yerelOkuyucu() ? 'yerel (eklenti)' : ('speechSynthesis' in window ? 'speechSynthesis' : 'YOK')) +
+           ' · bağlam ' + (sesBaglam ? sesBaglam.state : 'henüz açılmadı'));
   sat.push('fps ' + taniFps.toFixed(0));
   var bulundu = false;
   for(var i=0;i<CISIMLER.length;i++){
@@ -5048,7 +5211,12 @@ function dongu(zaman){
   /* Kare arka planda sürüyorsa çizme: bazı WebView'lar uygulama duraklatıldıktan
      sonra birkaç kare daha rAF çalıştırır, kara delik haritası boşuna hesaplanır. */
   if(document.hidden){ sonKare = 0; requestAnimationFrame(dongu); return; }
-  var dt = sonKare ? Math.min(0.05, (zaman - sonKare)/1000) : 0.016;
+  /* dt iki yönden de sınırlı. Üst sınır sıçramayı keser; ALT sınır şart çünkü
+     zaman damgası geriye giderse (sekme değişimi, saat düzeltmesi, kimi WebView
+     sürümleri) dt eksi çıkar ve `durum.t` eksiye düşer. O zaman Einstein
+     sahnesinde E = mc² patlamasının yarıçapı eksi hesaplanıp `createRadialGradient`
+     hata fırlatıyor, kare zinciri kopuyor ve ekran bomboş kalıyor. */
+  var dt = sonKare ? kis((zaman - sonKare)/1000, 0, 0.05) : 0.016;
   sonKare = zaman;
   durum.t += dt * durum.hiz;
 
@@ -5113,6 +5281,7 @@ function dongu(zaman){
   kdKareSonu();
   yildizTozuCiz(dt);
   patlamalariCiz(dt);
+  if(dokuErtele) setTimeout(dokuKuyruguBaslat, 200);   /* ilk kare çizildi, artık dosyalar inebilir */
   kdFps += (1/Math.max(dt, 1e-4) - kdFps)*0.05;
   if(taniAcik){ taniFps += (1/Math.max(dt, 1e-4) - taniFps)*0.08; taniCiz(); }
 
@@ -5128,18 +5297,45 @@ function el(id){ return document.getElementById(id); }
 var elSahneler = el('sahneler'), elListe = el('liste'), elKart = el('kart'),
     elKatalog = el('katalog'), elOyun = el('oyun'), elYapimci = el('yapimci');
 
-/* ---------- Sesler ---------- */
+/* ---------- Sesler ----------
+   Web Audio bağlamı kullanıcı dokunmadan önce "suspended" doğar ve kendiliğinden
+   açılmaz; o hâldeyken çalınan ses sessizce kaybolur. Telefonda ikinci bir tuzak
+   daha var: uygulama arka plana atılınca bağlam askıya alınıyor ve ön plana
+   dönünce askıda kalıyor — ondan sonra hiç tık sesi çıkmıyor. İkisi de `sesAc()`
+   ile çözülür; ilk dokunuşta bir kez, ön plana her dönüşte bir kez çağrılır.
+   `resume()` söz döndürür ama beklemeye gerek yok: bir sonraki ses zaten açık
+   bağlamı bulur, ilk tık en kötü ihtimalle sessiz geçer. */
 var sesBaglam = null;
-function tini(frek, sure, tur, ses){
+function sesAc(){
   try{
     if(!sesBaglam) sesBaglam = new (window.AudioContext || window.webkitAudioContext)();
-    var o = sesBaglam.createOscillator(), g = sesBaglam.createGain();
+    if(sesBaglam.state !== 'running' && sesBaglam.resume) sesBaglam.resume();
+  }catch(e){ return null; }
+  return sesBaglam;
+}
+/* İlk dokunuş ya da tuş bağlamı açar, sonra kendini siler. Yakalama evresinde
+   dinler ki sahnedeki sürükleme işleyicileri olayı yutarsa da kaçırmasın.
+   Bağlam burada YARATILMAZ demiyoruz — yaratılması da ilk dokunuşa denk gelsin
+   diye sayfa açılışında hiç çağrılmıyor; erken yaratılan bağlam askıda doğar. */
+function sesKilidiAc(){
+  sesAc();
+  document.removeEventListener('pointerdown', sesKilidiAc, true);
+  document.removeEventListener('keydown', sesKilidiAc, true);
+}
+document.addEventListener('pointerdown', sesKilidiAc, true);
+document.addEventListener('keydown', sesKilidiAc, true);
+
+function tini(frek, sure, tur, ses){
+  try{
+    var b = sesAc();
+    if(!b) return;
+    var o = b.createOscillator(), g = b.createGain();
     o.type = tur || 'sine'; o.frequency.value = frek;
-    g.gain.setValueAtTime(0, sesBaglam.currentTime);
-    g.gain.linearRampToValueAtTime(ses || 0.07, sesBaglam.currentTime + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, sesBaglam.currentTime + sure);
-    o.connect(g); g.connect(sesBaglam.destination);
-    o.start(); o.stop(sesBaglam.currentTime + sure + 0.02);
+    g.gain.setValueAtTime(0, b.currentTime);
+    g.gain.linearRampToValueAtTime(ses || 0.07, b.currentTime + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, b.currentTime + sure);
+    o.connect(g); g.connect(b.destination);
+    o.start(); o.stop(b.currentTime + sure + 0.02);
   }catch(e){}
 }
 function efekt(tip){
@@ -5233,6 +5429,7 @@ function sesiKes(){
 function gorunurlukDegisti(){
   sonKare = 0;
   if(document.hidden) sesiKes();
+  else if(sesBaglam) sesAc();     /* telefonda arka plandan dönünce bağlam askıda kalıyor */
 }
 document.addEventListener('visibilitychange', gorunurlukDegisti);
 
